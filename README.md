@@ -24,3 +24,7 @@ A Discord bot that monitors Reddit for posts and comments from specific users an
 ## What it does
 
 The bot monitors r/2007scape for new posts and comments from Jagex employees and sends real-time notifications to your configured Discord channel, including context for comment replies.
+
+## Example
+
+![Bot notification example](https://i.imgur.com/5LZkoYS.png)
