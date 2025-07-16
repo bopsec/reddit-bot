@@ -7,8 +7,7 @@ A Discord bot that monitors Reddit for posts and comments from specific users an
 1. **Invite the bot**: [Add to your server](https://discord.com/oauth2/authorize?client_id=1384871341198544989)
 
 2. **Grant permissions**: Make sure the bot has permission to:
-   - Send messages in the channel you want notifications in
-   - Use slash commands
+   - Read and Send messages in the channel you want notifications in
 
 3. **Configure notifications**: In the channel where you want Reddit notifications, run:
    ```
