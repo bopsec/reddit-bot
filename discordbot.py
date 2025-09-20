@@ -102,7 +102,7 @@ class MyClient(discord.Client):
                                 print(f"Tried to send post: {e}", flush=True)
                         self.already_notified_submissions.add(submission.id)
                 print(f"Polled {post_count} submissions", flush=True)
-                ## Modify the comment handling section in your reddit_checker_task function:
+
                 # --- comments
                 comment_count = 0
                 async for comment in subreddit.comments(limit=150):
@@ -125,7 +125,7 @@ class MyClient(discord.Client):
                                 parent_author = parent.author.name if parent.author else "[deleted]"
 
                                 # Format the parent comment with proper quote formatting
-                                # Limit to a reasonable preview (first 300 chars)
+                                # Limit to first 500 chars
                                 if len(parent_body) > 500:
                                     parent_body = parent_body[:500] + "..."
 
@@ -205,3 +205,4 @@ async def on_app_command_error(interaction: discord.Interaction, error):
         await interaction.response.send_message("An unknown error occurred.", ephemeral=True)
 
 client.run(DISCORD_TOKEN)
+
