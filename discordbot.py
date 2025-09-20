@@ -30,8 +30,9 @@ def set_channel_for_guild(guild_id, channel_id):
 REDDIT_USERNAMES = [
     "JagexElena", "JagexGoblin", "JagexAyiza", "JagexLight",
     "JagexBlossom", "JagexRach", "JagexArcane", "JagexHusky", "JagexSarnie",
-    "JagexNox", "JagexSween", "JagexRice", "JagexTwisted"
-    ,"BopOSRS" # just for testing i dont actually use the acc
+    "JagexNox", "JagexSween", "JagexRice", "JagexTwisted", "Mod_Kieren",
+    "JagexGengis", "JagexHalo", "JagexAsh6079", "JagexMaylea"
+    ,"BopOSRS" #testing
 ]
 
 NAMES_LOWER = set(u.lower() for u in REDDIT_USERNAMES)
@@ -72,7 +73,7 @@ class MyClient(discord.Client):
         await self.wait_until_ready()
         while not self.is_closed():
             try:
-                # Build the list of Discord channels to send alerts to
+                # Build a list of unique Discord channels to send alerts to
                 channels = []
                 for channel_id in set(channel_settings.values()):
                     channel = self.get_channel(int(channel_id))
@@ -84,10 +85,10 @@ class MyClient(discord.Client):
                     continue
 
                 subreddit = await self.reddit.subreddit(SUBREDDIT)
-                # -----------------------------
-                # ----------- Posts -----------
-                # -----------------------------
+                # --- Posts
+                post_count = 0
                 async for submission in subreddit.new(limit=25):
+                    post_count += 1
                     if (
                         submission.author
                         and submission.author.name.lower() in NAMES_LOWER
@@ -100,16 +101,18 @@ class MyClient(discord.Client):
                             except Exception as e:
                                 print(f"Tried to send post: {e}", flush=True)
                         self.already_notified_submissions.add(submission.id)
-
-                # --------------------------------
-                # ----------- Comments -----------
-                # --------------------------------
+                print(f"Polled {post_count} submissions", flush=True)
+                ## Modify the comment handling section in your reddit_checker_task function:
+                # --- comments
+                comment_count = 0
                 async for comment in subreddit.comments(limit=150):
+                    comment_count += 1
                     if (
                         comment.author
                         and comment.author.name.lower() in NAMES_LOWER
                         and comment.id not in self.already_notified_comments
                     ):
+                        # Get parent comment context
                         parent_context = ""
                         parent_author = ""
                         try:
@@ -121,8 +124,8 @@ class MyClient(discord.Client):
                                 parent_body = parent.body.strip()
                                 parent_author = parent.author.name if parent.author else "[deleted]"
 
-                                # Add ">" formatting to parent context
-                                # Limit to first 500 chars
+                                # Format the parent comment with proper quote formatting
+                                # Limit to a reasonable preview (first 300 chars)
                                 if len(parent_body) > 500:
                                     parent_body = parent_body[:500] + "..."
 
@@ -130,7 +133,7 @@ class MyClient(discord.Client):
                                 parent_blockquote = "\n".join([f"> {line}" for line in parent_lines])
                                 parent_context = f"**Replying to u/{parent_author}**:\n{parent_blockquote}\n\n"
                             else:
-                                # The "parent" is the main post itself
+                                # This is a top-level comment on a submission
                                 submission_title = parent.title
                                 parent_context = f"**Commenting on**: [{submission_title}]({parent.shortlink})\n\n"
                         except Exception as e:
@@ -138,7 +141,6 @@ class MyClient(discord.Client):
                             parent_context = ""
 
                         # Build the context-link (shows parent tree on Reddit)
-                        # < > around link to remove embed
                         link = f"<https://reddit.com{comment.permalink}?context=10>"
 
                         msg = (
@@ -153,29 +155,34 @@ class MyClient(discord.Client):
                             except Exception as e:
                                 print(f"Tried to send comment: {e}", flush=True)
                         self.already_notified_comments.add(comment.id)
+                print(f"Polled {comment_count} comments", flush=True)
             except Exception as e:
                 print("EXCEPTION in reddit_checker_task:", repr(e), flush=True)
             await asyncio.sleep(60)
 client = MyClient()
+
 
 @client.tree.command(name="setredditchannel", description="Set this channel for Reddit notifications (admin only)")
 @app_commands.checks.has_permissions(administrator=True)
 async def setredditchannel(interaction: discord.Interaction):
     guild_id = interaction.guild.id
     channel_id = interaction.channel.id
-
-    # Load and check bot perms
     channel = interaction.channel
+
+    # Check if the bot has necessary permissions in this channel
     bot_member = interaction.guild.get_member(client.user.id)
     channel_perms = channel.permissions_for(bot_member)
+
+    # Check view and send permissions
     if not channel_perms.view_channel:
         await interaction.response.send_message("Error: I don't have permission to view this channel.", ephemeral=True)
         return
+
     if not channel_perms.send_messages:
         await interaction.response.send_message("Error: I don't have permission to send messages in this channel.", ephemeral=True)
         return
 
-    # If we have the right perms, set channel
+    # If we have the right permissions, proceed to set the channel
     set_channel_for_guild(guild_id, channel_id)
     await interaction.response.send_message("This channel is now set for Reddit notifications!", ephemeral=True)
 
